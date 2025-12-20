@@ -2,7 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5"
+    android:background="?attr/colorBackground"
     android:padding="20dp">
 
     <LinearLayout
@@ -15,7 +15,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Tạo bài viết mới"
-            android:textColor="#212121"
+            android:textColor="?attr/colorPrimary"
             android:textSize="24sp"
             android:textStyle="bold"
             android:layout_marginBottom="20dp"/>
@@ -25,8 +25,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Link hình ảnh (URL):"
-            android:textColor="#616161"
-            android:layout_marginBottom="5dp"/>
+            android:textColor="?attr/colorPrimary"
+            android:textSize="16sp"
+            android:layout_marginBottom="8dp"/>
 
         <EditText
             android:id="@+id/etImageUrl"
@@ -34,9 +35,9 @@
             android:layout_height="wrap_content"
             android:hint="Dán liên kết ảnh vào đây..."
             android:inputType="textUri"
-            android:textColor="#212121"
-            android:textColorHint="#9E9E9E"
-            android:background="@drawable/bg_input_light"
+            android:textColor="?attr/colorOnSurface"
+            android:background="@drawable/white_background"
+            android:backgroundTint="?attr/colorSurface"
             android:padding="12dp"
             android:layout_marginBottom="15dp"/>
 
@@ -45,17 +46,18 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Tiêu đề:"
-            android:textColor="#616161"
-            android:layout_marginBottom="5dp"/>
+            android:textColor="?attr/colorPrimary"
+            android:textSize="16sp"
+            android:layout_marginBottom="8dp"/>
 
         <EditText
             android:id="@+id/etPostTitle"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="wrap_content"
             android:hint="Tiêu đề bài viết"
-            android:textColor="#212121"
-            android:textColorHint="#9E9E9E"
-            android:background="@drawable/bg_input_light"
+            android:textColor="?attr/colorOnSurface"
+            android:background="@drawable/white_background"
+            android:backgroundTint="?attr/colorSurface"
             android:padding="12dp"
             android:layout_marginBottom="15dp"/>
 
@@ -64,14 +66,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Danh mục:"
-            android:textColor="#616161"
-            android:layout_marginBottom="5dp"/>
+            android:textColor="?attr/colorPrimary"
+            android:textSize="16sp"
+            android:layout_marginBottom="8dp"/>
 
         <Spinner
             android:id="@+id/spinnerCategories"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:background="@drawable/bg_input_light"
+            android:background="@drawable/white_background"
+            android:backgroundTint="?attr/colorSurface"
             android:layout_marginBottom="15dp"/>
 
         <!-- Content -->
@@ -79,31 +83,32 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Nội dung:"
-            android:textColor="#616161"
-            android:layout_marginBottom="5dp"/>
+            android:textColor="?attr/colorPrimary"
+            android:textSize="16sp"
+            android:layout_marginBottom="8dp"/>
 
         <EditText
             android:id="@+id/etPostContent"
             android:layout_width="match_parent"
-            android:layout_height="440dp"
-            android:background="@drawable/bg_input_light"
+            android:layout_height="250dp"
+            android:background="@drawable/white_background"
+            android:backgroundTint="?attr/colorSurface"
             android:gravity="top|start"
             android:hint="Nội dung chi tiết..."
             android:padding="12dp"
-            android:textColor="#212121"
-            android:textColorHint="#9E9E9E"
-            android:lineSpacingExtra="4dp" />
+            android:textColor="?attr/colorOnSurface"
+            android:lineSpacingExtra="4dp"
+            android:layout_marginBottom="20dp"/>
 
         <!-- Submit -->
         <Button
             android:id="@+id/btnSubmitPost"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:text="Đăng bài"
             android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="@color/blue_primary"
-            android:padding="12dp"/>
+            android:textColor="?attr/colorOnPrimary"
+            android:backgroundTint="?attr/colorPrimary"/>
 
     </LinearLayout>
 </ScrollView>
