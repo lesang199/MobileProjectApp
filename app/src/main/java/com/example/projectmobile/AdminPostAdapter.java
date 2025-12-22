@@ -1,7 +1,5 @@
 package com.example.projectmobile;
 
-
-
 import android.content.Context;
 import android.graphics.Color;
 import android.view.LayoutInflater;
@@ -57,11 +55,18 @@ public class AdminPostAdapter extends RecyclerView.Adapter<AdminPostAdapter.View
 
         // Sự kiện Duyệt bài
         holder.btnApprove.setOnClickListener(v -> {
+            post.setStatus("approved");
+            notifyItemChanged(position);
+
             db.collection("posts").document(post.getId())
                     .update("status", "approved")
                     .addOnSuccessListener(aVoid -> {
                         Toast.makeText(context, "Đã duyệt bài!", Toast.LENGTH_SHORT).show();
+                    })
+                    .addOnFailureListener(e -> {
+                        post.setStatus("pending"); // Hoặc trạng thái ban đầu của bài viết
                         notifyItemChanged(position);
+                        Toast.makeText(context, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
         });
 
