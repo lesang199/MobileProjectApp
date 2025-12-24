@@ -1,6 +1,9 @@
 package com.example.projectmobile;
 
 import android.app.AlertDialog;
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -38,15 +41,17 @@ public class HistoryActivity extends AppCompatActivity {
 
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
+    private DatabaseHelper dbHelper; // 1. Khai báo DatabaseHelper
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history);
 
-        // Khởi tạo Firebase
+        // Khởi tạo Firebase & SQLite
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
+        dbHelper = new DatabaseHelper(this); // 2. Khởi tạo DatabaseHelper
 
         // Ánh xạ Views
         recyclerHistory = findViewById(R.id.recyclerHistory);
@@ -65,11 +70,39 @@ public class HistoryActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Tải lại lịch sử mỗi khi quay lại màn hình này
         loadHistory();
     }
 
+    // 3. Hàm kiểm tra kết nối mạng (Mới thêm)
+    private boolean isNetworkAvailable() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.isConnected();
+    }
+
     private void loadHistory() {
+        // --- TRƯỜNG HỢP 1: KHÔNG CÓ MẠNG (OFFLINE) ---
+        if (!isNetworkAvailable()) {
+            Log.d(TAG, "Mất mạng: Tải lịch sử từ SQLite");
+            Toast.makeText(this, "Bạn đang xem lịch sử Offline", Toast.LENGTH_SHORT).show();
+
+            // Lấy dữ liệu từ SQLite (Yêu cầu DatabaseHelper phải có hàm getAllHistoryOffline)
+            List<Post> offlineList = dbHelper.getAllHistoryOffline();
+
+            postList.clear();
+            postList.addAll(offlineList);
+            historyAdapter.notifyDataSetChanged();
+
+            // Ẩn nút xóa khi offline để tránh lỗi đồng bộ
+            fabDeleteHistory.setVisibility(View.GONE);
+
+            if (postList.isEmpty()) {
+                Toast.makeText(this, "Chưa có bài viết lưu trong máy.", Toast.LENGTH_SHORT).show();
+            }
+            return; // Kết thúc hàm, không chạy code Firebase bên dưới
+        }
+
+        // --- TRƯỜNG HỢP 2: CÓ MẠNG (ONLINE) - Code cũ của bạn ---
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) {
             Toast.makeText(this, "Vui lòng đăng nhập để xem lịch sử", Toast.LENGTH_SHORT).show();
@@ -86,11 +119,11 @@ public class HistoryActivity extends AppCompatActivity {
                     if (historySnapshots.isEmpty()) {
                         postList.clear();
                         historyAdapter.notifyDataSetChanged();
-                        fabDeleteHistory.setVisibility(View.GONE); // Ẩn nút xóa nếu không có lịch sử
-                        Toast.makeText(this, "Lịch sử đọc của bạn trống.", Toast.LENGTH_SHORT).show();
+                        fabDeleteHistory.setVisibility(View.GONE);
+                        Toast.makeText(this, "Lịch sử đọc Online trống.", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    fabDeleteHistory.setVisibility(View.VISIBLE); // Hiện nút xóa nếu có lịch sử
+                    fabDeleteHistory.setVisibility(View.VISIBLE);
 
                     List<String> postIds = new ArrayList<>();
                     for (QueryDocumentSnapshot doc : historySnapshots) {
@@ -108,12 +141,18 @@ public class HistoryActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Lỗi khi tải lịch sử", e);
-                    Toast.makeText(this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Lỗi Firebase, chuyển sang Offline", e);
+                    // 4. Fallback: Nếu có mạng nhưng lỗi Firebase -> Vẫn lấy từ SQLite
+                    List<Post> offlineList = dbHelper.getAllHistoryOffline();
+                    postList.clear();
+                    postList.addAll(offlineList);
+                    historyAdapter.notifyDataSetChanged();
                 });
     }
 
     private void fetchPostsDetails(final List<String> postIds) {
+        // Lưu ý: Firebase giới hạn whereIn tối đa 10 phần tử.
+        // Nếu lịch sử > 10 bài có thể lỗi, nhưng tạm thời giữ nguyên logic của bạn.
         db.collection("posts").whereIn(FieldPath.documentId(), postIds)
                 .get()
                 .addOnSuccessListener(postsSnapshots -> {
@@ -126,7 +165,14 @@ public class HistoryActivity extends AppCompatActivity {
                                 postList.add(post);
                             }
                         }
-                        Collections.sort(postList, Comparator.comparingInt(p -> postIds.indexOf(p.getPostId())));
+                        // Sắp xếp lại theo thứ tự xem gần nhất (dựa vào list postIds ban đầu)
+                        // Cần xử lý cẩn thận nếu postId không tồn tại trong list
+                        Collections.sort(postList, (p1, p2) -> {
+                            int index1 = postIds.indexOf(p1.getPostId());
+                            int index2 = postIds.indexOf(p2.getPostId());
+                            return Integer.compare(index1, index2);
+                        });
+
                         historyAdapter.notifyDataSetChanged();
                     }
                 })
@@ -136,6 +182,11 @@ public class HistoryActivity extends AppCompatActivity {
     }
 
     private void showDeleteConfirmationDialog() {
+        if (!isNetworkAvailable()) {
+            Toast.makeText(this, "Vui lòng kết nối mạng để xóa lịch sử.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         new AlertDialog.Builder(this)
                 .setTitle("Xóa Lịch Sử")
                 .setMessage("Bạn có chắc chắn muốn xóa toàn bộ lịch sử đọc báo không?")
@@ -154,14 +205,17 @@ public class HistoryActivity extends AppCompatActivity {
         String userId = currentUser.getUid();
         CollectionReference historyRef = db.collection("users").document(userId).collection("history");
 
-        // Xóa tất cả các document trong sub-collection 'history' theo batch
         historyRef.get().addOnSuccessListener(queryDocumentSnapshots -> {
             WriteBatch batch = db.batch();
             for (QueryDocumentSnapshot doc : queryDocumentSnapshots) {
                 batch.delete(doc.getReference());
             }
             batch.commit().addOnSuccessListener(aVoid -> {
-                Toast.makeText(HistoryActivity.this, "Đã xóa toàn bộ lịch sử.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(HistoryActivity.this, "Đã xóa toàn bộ lịch sử Online.", Toast.LENGTH_SHORT).show();
+
+                // 5. Xóa cả lịch sử Offline cho đồng bộ (Tùy chọn)
+                dbHelper.clearOfflineHistory();
+
                 postList.clear();
                 historyAdapter.notifyDataSetChanged();
                 fabDeleteHistory.setVisibility(View.GONE);

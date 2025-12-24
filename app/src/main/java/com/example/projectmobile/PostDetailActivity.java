@@ -86,6 +86,8 @@ public class PostDetailActivity extends AppCompatActivity implements CommentAdap
         if (btnBack != null) {
             btnBack.setOnClickListener(v -> finish());
         }
+        DatabaseHelper dbHelper = new DatabaseHelper(this);
+        dbHelper.addPost(post);
     }
 
     private void displayPostDetails() {

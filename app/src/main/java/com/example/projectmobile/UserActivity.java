@@ -51,7 +51,7 @@ public class UserActivity extends AppCompatActivity {
 
     private final String BASE_URL = "https://api.openweathermap.org/";
     private final String API_KEY = "89d418e26e99bc878719355d91cf78b0";
-    private final String CITY = "Ho Chi Minh";
+    private final String CITY = "Thanh Pho Ho Chi Minh";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
